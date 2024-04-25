@@ -1,10 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel", "setuptools-git-versioning"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools-git-versioning]
+enabled = true
 
 [project]
 name = "rfproto"
-version = "0.0.1"
+dynamic = ["version"]
 authors = [
   { name="John Gentile", email="johncgentile17@gmail.com" },
 ]
