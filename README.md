@@ -1,6 +1,9 @@
 # rfproto
 
 [![CI Pipeline](https://github.com/JohnnyGOX17/rfproto/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnnyGOX17/rfproto/actions/workflows/ci.yml)
+[![PyPI - Version](https://badge.fury.io/py/rfproto.svg)](https://badge.fury.io/py/rfproto)
+![PyPI - License](https://img.shields.io/pypi/l/rfproto)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Python for RF and SDR prototyping.
 
