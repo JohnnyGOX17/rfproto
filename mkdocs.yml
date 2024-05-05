@@ -1,4 +1,12 @@
 site_name: rfproto Docs
+site_url: https://johnnygox17.github.io/rfproto/
+site_author: John Gentile
+site_description: Docs for rfproto repo
+
+repo_name: JohnnyGOX17/rfproto
+repo_url: https://github.com/JohnnyGOX17/rfproto
+
+copyright: Copyright &copy; 2024 John Gentile
 
 theme:
   name: "material"

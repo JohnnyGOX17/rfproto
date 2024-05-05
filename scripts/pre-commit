@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+echo "Running pre-commit Git hook..."
+if ! ./scripts/run-tests.sh; then
+  echo "ERROR: commit blocked, tests not passing!"
+  exit 1
+else
+  echo "Pre-commit Git hook done!"
+fi

@@ -10,6 +10,12 @@ Python for RF and SDR prototyping.
 
 ## Building & CI
 
+* Install pre-commit checks with `$ ln -sf ../../scripts/pre-commit ./.git/hooks/pre-commit`
 * Trigger GitHub action to publish to PyPI with a tagged commit (e.x. `git tag -am "test auto versioning" 0.0.2`) on `main` branch. Note versioning is also inferred from the git tag value, and this will only run on push on tag.
 * Documentation uses [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), preview with `$ mkdocs serve`. Publishes with GitHub action as well.
+
+### Testing
+
+* Pre-commit tests run `pytest`
+* Install editable local version with `$ python3 -m pip install --editable .`
 
