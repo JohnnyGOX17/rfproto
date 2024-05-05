@@ -42,4 +42,6 @@ test = [
 
 [project.urls]
 Homepage = "https://github.com/JohnnyGOX17/rfproto"
+Documentation = "https://johnnygox17.github.io/rfproto/"
 Issues = "https://github.com/JohnnyGOX17/rfproto/issues"
+Repository = "https://github.com/JohnnyGOX17/rfproto.git"
