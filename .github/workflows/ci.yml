@@ -19,8 +19,10 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
-      - name: Install dependencies
-        run: pip install .[test]
+      - name: Install dependencies and local repo for testing
+        run: |
+          pip install .[test]
+          pip install .
       - name: Run Tests
         run: scripts/run-tests.sh
       - if: ${{ success() }}

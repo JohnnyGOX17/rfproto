@@ -17,5 +17,5 @@ Python for RF and SDR prototyping.
 ### Testing
 
 * Pre-commit tests run `pytest`
-* Install editable local version with `$ python3 -m pip install --editable .`
+* In a `venv`, install editable local version for testing with `$ pip install -e .`
 

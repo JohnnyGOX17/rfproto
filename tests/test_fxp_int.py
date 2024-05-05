@@ -1,4 +1,4 @@
-from pyrflib import fxp_int as fp
+from rfproto import fxp_int as fp
 
 
 def test_bad_ctor():
