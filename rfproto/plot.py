@@ -1,0 +1,287 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.animation as animation
+from matplotlib.ticker import EngFormatter
+import scipy.signal as sig
+import typing
+
+from . import measurements, frequency, utils
+
+
+def _plot_common(title):
+    """Common plot setup"""
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    plt.title(title)
+    plt.margins(x=0)
+    plt.grid(True, linestyle="--")
+    plt.minorticks_on()
+    plt.tick_params(labelsize=8)
+    return fig, ax
+
+
+def samples(y, title=""):
+    """Plot samples (no time-base)"""
+    fig, ax = _plot_common(title)
+    plt.plot(y, linewidth=0.5)
+    plt.ylabel("Amplitude", fontsize=12)
+    plt.xlabel("Sample", fontsize=12)
+    return fig, ax
+
+
+def time_sig(t, y, title=""):
+    """Plot samples over a given time-base"""
+    fig, ax = _plot_common(title)
+    plt.plot(t, y, linewidth=0.5)
+    plt.ylabel("Amplitude", fontsize=12)
+    plt.xlabel("Time (s)", fontsize=12)
+    return fig, ax
+
+
+def filter_coefficients(filter_coef: np.ndarray, title=""):
+    """Plot filter coefficients"""
+    fig, ax = _plot_common(title)
+    plt.plot(filter_coef, ".")
+    plt.ylabel("Amplitude", fontsize=12)
+    plt.xlabel("Index", fontsize=12)
+    return fig, ax
+
+
+def filter_response(filter_coef: np.ndarray, title=""):
+    """Plot filter frequency response"""
+    w, h = sig.freqz(filter_coef)
+    fig, ax = _plot_common(title)
+    ax.plot(w / np.pi, utils.mag_to_dB(h), "b")
+    ax.set_ylabel("Amplitude (dB)", color="b", fontsize=12)
+    ax.set_xlabel(r"Normalized Frequency ($\times \pi$ rad/sample)", fontsize=12)
+    ax2 = ax.twinx()
+    angles = np.unwrap(np.angle(h))
+    ax2.plot(w / np.pi, angles, "g")
+    ax2.set_ylabel("Angle (radians)", color="g", fontsize=12)
+    ax2.axis("tight")
+    return fig, ax
+
+
+def freq_sig(freq, y, title="", scale_noise=False, y_unit="dBFS"):
+    """Plot frequency-domain input signal"""
+    fig, ax = _plot_common(title)
+    plt.plot(freq, y, linewidth=0.5)
+    plt.xlabel("Frequency (Hz)", fontsize=12)
+    plt.ylabel(f"Magnitude ({y_unit})", fontsize=12)
+    if scale_noise:  # standard pyplot shows full noise extent
+        plt.ylim(y.mean(0) - 5, y.max(0) + 5)
+    formatter_eng = EngFormatter(unit="Hz")
+    ax.xaxis.set_major_formatter(formatter_eng)
+    return fig, ax
+
+
+def spec_an(
+    x: np.ndarray,
+    fs: float,
+    title="",
+    scale_noise=False,
+    y_unit="dBFS",
+    real: bool = False,
+    norm: bool = False,
+    ignore_percent: float = 0.1,
+    fft_shift=False,
+    show_SFDR=True,
+):
+    """Take PSD of time-domain input signal and plot in frequency-domain"""
+    freq, y_PSD = measurements.PSD(x, fs, real, norm)
+    if fft_shift:
+        y_PSD = np.fft.fftshift(y_PSD)
+        freq = (
+            np.linspace(-len(y_PSD) // 2, len(y_PSD) // 2, len(y_PSD)) * fs / len(y_PSD)
+        )
+    dSFDR = measurements.SFDR(x, fs, real, norm, ignore_percent)
+    title_str = title + " [SFDR: {:.2f} dB]".format(dSFDR["SFDR"])
+    fig, ax = freq_sig(freq, y_PSD, title_str, scale_noise, y_unit)
+
+    if show_SFDR:
+        max_freq = max(freq)
+        max_dB = max(y_PSD)
+        txt_offset_x = 0.05 * max_freq
+        txt_offset_y = 0.05 * max_dB if abs(max_dB) > 3 else 5
+
+        spur_f_str = frequency.FreqStr(dSFDR["spur_Hz"], "Hz")
+        fund_f_str = frequency.FreqStr(dSFDR["fc_Hz"], "Hz")
+
+        ax.plot(dSFDR["spur_Hz"], dSFDR["spur_dB"], "s", color="orange")
+        ax.text(
+            dSFDR["spur_Hz"] + txt_offset_x,
+            dSFDR["spur_dB"] + txt_offset_y,
+            "{:.2f} {} @\n{}".format(dSFDR["spur_dB"], y_unit, spur_f_str),
+        )
+
+        ax.plot(dSFDR["fc_Hz"], dSFDR["fc_dB"], "s", color="black")
+        ax.text(
+            dSFDR["fc_Hz"] + txt_offset_x,
+            dSFDR["fc_dB"] - txt_offset_y,
+            "{:.2f} {} @\n{}".format(dSFDR["fc_dB"], y_unit, fund_f_str),
+        )
+    return fig, ax
+
+
+def IQ(
+    signal: np.ndarray,
+    title: str = "",
+    alpha: float = 1.0,
+    label: bool = False,
+):
+    """Generate I/Q plot
+
+    Parameters
+    ----------
+    signal : ndarray
+        Complex sample data vector
+    title : str, optional, default: ""
+        Plot title
+    alpha : float, optional, default: 1.0
+        Value < 1.0 allows opaque dot points, useful for high sample count
+        clustering visualization
+    labels : bool, optional, default: False
+        When True, label each point based on sample/point index
+    """
+    fig, ax = _plot_common(title)
+    plt.plot(np.real(signal), np.imag(signal), ".", alpha=alpha)
+    plt.axvline(x=0, color="orange")
+    plt.axhline(y=0, color="orange")
+    plt.xlabel("In-Phase (I)", fontsize=12)
+    plt.ylabel("Quadrature (Q)", fontsize=12)
+    plt.axis("equal")
+    if label:
+        for i in range(len(signal)):
+            plt.annotate(
+                utils.int_to_bin_str(i, width=(len(signal) - 1).bit_length()),
+                xy=(np.real(signal[i]), np.imag(signal[i])),
+                xytext=(1.5, 1.5),
+                textcoords="offset points",
+            )
+    return fig, ax
+
+
+@typing.no_type_check
+def IQ_animated(
+    signal: np.ndarray,
+    num_points_per_frame: int,
+    title: str = "IQ Plot",
+    file: str = "",
+    fps: int = 10,
+):
+    """Generate animated I/Q plot (shows I/Q over time)
+    NOTE: can be used in notebook with `%matplotlib widget` macro at top of notebook
+
+    Parameters
+    ----------
+    signal : ndarray
+        Complex I/Q sample data vector
+    num_points_per_frame : int
+        How many points per frame to plot
+    title : str, optional, default: ""
+        Plot title
+    file : str, optional, default: ""
+        GIF file to save to when non-empty
+    fps : int, optional, default: 10
+        Frames per second to render animated I/Q plit
+    """
+    num_frames = int(len(signal) / num_points_per_frame)
+
+    fig = plt.figure(constrained_layout=True)
+    ax_histxy = fig.add_gridspec(top=0.75, right=0.75).subplots()
+    ax_histxy.set(aspect=1)
+    ax_histx = ax_histxy.inset_axes([0, 1.05, 1, 0.25], sharex=ax_histxy)
+    ax_histy = ax_histxy.inset_axes([1.05, 0, 0.25, 1], sharey=ax_histxy)
+    ax_histx.tick_params(axis="x", labelbottom=False)
+    ax_histy.tick_params(axis="y", labelleft=False)
+
+    max_mag = max(np.max(np.abs(np.real(signal))), np.max(np.abs(np.imag(signal))))
+    max_mag = int(max_mag * 1.05)  # give 5% margin for size
+
+    def update_iq_plot(frame):
+        ax_histxy.clear()
+        ax_histx.clear()
+        ax_histy.clear()
+        ax_histxy.set(title=f"{title} (Frame: {frame})")
+
+        start_idx = frame * num_points_per_frame
+        end_idx = start_idx + num_points_per_frame
+        i_vals = np.real(signal[start_idx:end_idx])
+        q_vals = np.imag(signal[start_idx:end_idx])
+
+        ax_histxy.hist2d(i_vals, q_vals, bins=(max_mag, max_mag), cmap=plt.cm.viridis)
+        ax_histxy.set_facecolor(mpl.cm.get_cmap("viridis")(0))
+        ax_histxy.set(aspect=1)
+        ax_histx.hist(i_vals, bins=max_mag)
+        ax_histy.hist(i_vals, bins=max_mag, orientation="horizontal")
+        ax_histxy.set_xlim([-max_mag, max_mag])
+        ax_histxy.set_ylim([-max_mag, max_mag])
+        ax_histxy.set_xlabel("I")
+        ax_histxy.set_ylabel("Q")
+
+    ani = animation.FuncAnimation(
+        fig=fig, func=update_iq_plot, frames=num_frames, interval=fps
+    )
+
+    if file:
+        writer = animation.PillowWriter(fps=fps)
+        ani.save(file, writer=writer)
+
+    plt.show()
+
+
+def eye(
+    signal: np.ndarray,
+    SPS: int,
+    num_disp_sym: int = 2,
+    num_sweeps: int = -1,
+):
+    """Generate eye diagram of time domain input signal
+
+    Parameters
+    ----------
+    signal : ndarray
+        Complex I/Q sample data vector
+    SPS :int
+        Samples/Symbol ratio (NOTE: must be an integer oversampling ration (OSR)
+        to properly render time-sliced eye
+    num_disp_sym : int, optional, default: 2
+        Number of symbols to display in eye diagram
+    num_sweeps : int, optional, default: len(signal)
+        Number of eye sweeps to plot, defaults to entire length of input signal
+    """
+    if num_sweeps < 1:
+        num_sweeps = len(signal)
+
+    # resample input data to make somewhat continuous waveform
+    resamp = 10
+    upsample_by = SPS * resamp
+    tx_resamp = sig.resample(signal, len(signal) * resamp)
+    samp_per_win = upsample_by * num_disp_sym
+
+    # N is total number of possible windows
+    N = len(tx_resamp) // samp_per_win
+
+    tx_eye = np.array(tx_resamp)
+    tx_eye.resize(N * samp_per_win)
+    grouped = np.reshape(tx_eye, [N, samp_per_win])
+    eye = np.real(grouped.T)
+
+    # create an xaxis in samples np.shape(eye) gives the
+    # 2 dimensional size of the eye data and the first element
+    # is the interpolated number of samples along the x axis
+    nsamps = np.shape(eye)[0]
+    xaxis = np.arange(nsamps) / resamp
+
+    plt.figure()
+    # plot showing continuous trajectory of
+    plt.plot(xaxis, eye[:, :num_sweeps])
+    # actual sample locations
+    plt.plot(xaxis[::resamp], eye[:, :num_sweeps][::resamp], "b.")
+    plt.title("Eye Diagram")
+    plt.xlabel("Samples")
+    plt.grid()
+    plt.show()
+
+    return xaxis, eye

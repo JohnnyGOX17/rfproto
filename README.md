@@ -5,7 +5,7 @@
 ![PyPI - License](https://img.shields.io/pypi/l/rfproto)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Python for RF and SDR prototyping.
+Python library for RF and SDR prototyping. Helpful reuse methods for RF measurements, as well as experimenting with topics like communication systems, radar, antenna arrays, etc.
 
 
 ## Building & CI

@@ -22,8 +22,9 @@ classifiers = [
 ]
 
 dependencies = [
-  "numpy",
+  "control",
   "matplotlib",
+  "numpy",
   "scipy",
 ]
 
