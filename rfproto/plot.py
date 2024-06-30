@@ -231,6 +231,7 @@ def IQ_animated(
     plt.show()
 
 
+# TODO: add jitter/histogram like measurements like https://www.mathworks.com/help/comm/ug/eye-diagram-analysis.html
 def eye(
     signal: np.ndarray,
     SPS: int,
