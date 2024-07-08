@@ -8,14 +8,19 @@
 Python library for RF and SDR prototyping. Helpful reuse methods for RF measurements, as well as experimenting with topics like communication systems, radar, antenna arrays, etc.
 
 
-## Building & CI
+## Developing
 
+### Building & CI
+
+* Install editable local version (preferably within a [venv](https://john-gentile.com/kb/programming_languages/python.html#virtual-environments-venv)) with all optional packages for testing with `$ pip install --upgrade --user -e .[docs,test]`
 * Install pre-commit checks with `$ ln -sf ../../scripts/pre-commit ./.git/hooks/pre-commit`
 * Trigger GitHub action to publish to PyPI with a tagged commit (e.x. `git tag -am "test auto versioning" 0.0.2`) on `main` branch. Note versioning is also inferred from the git tag value, and this will only run on push on tag.
-* Documentation uses [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), preview with `$ mkdocs serve`. Publishes with GitHub action as well.
 
 ### Testing
 
-* Pre-commit tests run `pytest`
-* In a `venv`, install editable local version for testing with `$ pip install -e .`
+Run test suite with `$ ./scripts/run-tests.sh`
+
+### Documentation
+
+Documentation uses [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), preview with `$ mkdocs serve -a localhost:8888`. Publishes with GitHub action as well.
 
