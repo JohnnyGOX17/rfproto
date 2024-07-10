@@ -45,7 +45,7 @@ def RootRaisedCosine(
     alpha : float
         Rolloff (:math: `\\alpha`) of impulse response
     num_taps : int
-        Number of filter taps
+        Number of filter taps. _Should_ be odd for pulse shaping applications, though need not be
 
     References
     ----------
@@ -58,7 +58,8 @@ def RootRaisedCosine(
         raise ValueError(f"Alpha of {alpha} is not in range (0, 1]")
 
     for i in range(num_taps):
-        t = (i - (num_taps / 2.0)) / sample_rate
+        idx = round((i - (num_taps / 2.0)) + 0.5)
+        t = idx / sample_rate
 
         if t == 0.0:
             h_rrc[i] = 1.0 - alpha + (4.0 * alpha / np.pi)
@@ -80,6 +81,7 @@ def RootRaisedCosine(
             )
             h_rrc[i] = (tmp_a + tmp_b) / tmp_c
 
+        # filter with unity passband gain has coefficients that sum to 1
         weight_sum += h_rrc[i]
     return h_rrc / weight_sum
 
