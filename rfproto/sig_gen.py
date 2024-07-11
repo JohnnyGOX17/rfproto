@@ -131,11 +131,11 @@ def gen_mod_signal(
     match tx_pulse_filter:
         case "RC":
             tx_filter = filter.RaisedCosine(
-                L * output_sample_rate, input_symbol_rate, tx_filter_rolloff, 32 * L
+                L * output_sample_rate, input_symbol_rate, tx_filter_rolloff, 32 * L + 1
             )
         case "RRC":
             tx_filter = filter.RootRaisedCosine(
-                L * output_sample_rate, input_symbol_rate, tx_filter_rolloff, 32 * L
+                L * output_sample_rate, input_symbol_rate, tx_filter_rolloff, 32 * L + 1
             )
         case _:
             raise ValueError("Unknown TX pulse shape filter type!")

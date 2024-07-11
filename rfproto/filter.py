@@ -1,25 +1,23 @@
+"""Implements filter methods"""
+
 import numpy as np
 
 
 def RaisedCosine(
     sample_rate: float, symbol_rate: float, alpha: float, num_taps: int
 ) -> np.ndarray:
-    """Generates Raised Cosine impulse response
+    """Generates [Raised Cosine filter](https://en.wikipedia.org/wiki/Raised-cosine_filter) impulse response as:
 
-    Parameters
-    ----------
-    sample_rate : float
-        Sample rate of signal (Hz)
-    symbol_rate : float
-        Symbol rate of signal (Hz)
-    alpha : float
-        Rolloff (:math: `\\alpha`) of impulse response
-    num_taps : int
-        Number of filter taps
+    ![impulse_response](https://wikimedia.org/api/rest_v1/media/math/render/svg/8b38e84f30fc32db087bddc9570266683691084c)
 
-    References
-    ----------
-    .. [1] [Raised Cosine Filter - Wikipedia](https://en.wikipedia.org/wiki/Raised-cosine_filter)
+    Args:
+        sample_rate: Sample rate of signal (Hz)
+        symbol_rate: Symbol rate of signal (Hz)
+        alpha: Roll-off ($\\alpha$) of impulse response
+        num_taps: Number of filter taps
+
+    Returns:
+        Array of filter coefficients
     """
     h_rc = np.zeros(num_taps)
     Ts = sample_rate / symbol_rate
@@ -34,22 +32,22 @@ def RaisedCosine(
 def RootRaisedCosine(
     sample_rate: float, symbol_rate: float, alpha: float, num_taps: int
 ) -> np.ndarray:
-    """Returns unity-gain, floating-point Root-Raised Cosine (RRC) filter coefficients
+    """Returns unity-gain, floating-point Root-Raised Cosine (RRC) filter coefficients.
 
-    Parameters
-    ----------
-    sample_rate : float
-        Sample rate of signal (Hz)
-    symbol_rate : float
-        Symbol rate of signal (Hz)
-    alpha : float
-        Rolloff (:math: `\\alpha`) of impulse response
-    num_taps : int
-        Number of filter taps. _Should_ be odd for pulse shaping applications, though need not be
+    Unity passband gain is achieved by ensuring returned coefficients sum to `1.0`:
 
-    References
-    ----------
-    .. [1] [Root Raised Cosine (RRC) Filters and Pulse Shaping in Communication Systems - NASA](https://ntrs.nasa.gov/api/citations/20120008631/downloads/20120008631.pdf)
+    $$ \\hat{h(t)} = h(t) / \\sum h(t) $$
+
+    For more information, see [Root Raised Cosine (RRC) Filters and Pulse Shaping in Communication Systems - NASA](https://ntrs.nasa.gov/api/citations/20120008631/downloads/20120008631.pdf).
+
+    Args:
+        sample_rate: Sample rate of signal (Hz)
+        symbol_rate: Symbol rate of signal (Hz)
+        alpha: Roll-off ($\\alpha$) of impulse response
+        num_taps: Number of filter taps
+
+    Returns:
+        Array of filter coefficients
     """
     h_rrc = np.zeros(num_taps)
     weight_sum = 0.0
@@ -57,8 +55,11 @@ def RootRaisedCosine(
     if (alpha <= 0.0) or (alpha > 1.0):
         raise ValueError(f"Alpha of {alpha} is not in range (0, 1]")
 
+    if num_taps % 2 == 0:
+        raise ValueError("num_taps must be odd!")
+
     for i in range(num_taps):
-        idx = round((i - (num_taps / 2.0)) + 0.5)
+        idx = i - (num_taps / 2.0) + 0.5
         t = idx / sample_rate
 
         if t == 0.0:
@@ -87,7 +88,13 @@ def RootRaisedCosine(
 
 
 def UnityResponse(num_taps: int) -> np.ndarray:
-    """Returns unity-gain, passthrough filter coefficients"""
+    """Returns unity-gain, passthrough filter coefficients
+    Args:
+        num_taps: Number of filter taps
+
+    Returns:
+        Array of filter coefficients
+    """
     h_unity = np.zeros(num_taps)
     h_unity[num_taps // 2] = 1.0
     return h_unity
