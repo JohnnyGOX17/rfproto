@@ -1,13 +1,14 @@
-#
-# Utilities & helper functions for things like fixed-point/binary conversion,
-#  dB/Mag conversion, etc.
-#
-# NOTE: while there are Python packages that can help with arbitrary FXP math
-#       [like this](https://github.com/francof2a/fxpmath), most DSP functions
-#       here can use [numpy integer types](https://numpy.org/doc/stable/reference/arrays.scalars.html#integer-types)
-#       to model common C/HDL fixed-point values. This also removes an external
-#       dependency from this package.
-#
+"""
+Utilities & helper functions for things like fixed-point/binary conversion,
+ dB/Mag conversion, etc.
+
+**NOTE:** while there are Python packages that can help with arbitrary FXP math
+[like this](https://github.com/francof2a/fxpmath), most DSP functions
+here can use [numpy integer types](https://numpy.org/doc/stable/reference/arrays.scalars.html#integer-types)
+to model common C/HDL fixed-point values. This also removes an external
+dependency from this package.
+"""
+
 import numpy as np
 
 
@@ -16,27 +17,29 @@ def fxp_to_dbl(x: int, num_frac_bits: int) -> float:
     some number of fractional bits `num_frac_bits`. Note that a signed FXP value
     requires 1-bit for sign representation. For example, a 16b signed `short` int
     representing a value with no integer part has `num_frac_bits = 15` (or in
-    Q0.15 in [Q format](https://en.wikipedia.org/wiki/Q_(number_format))"""
+    `Q0.15` in [Q format](https://en.wikipedia.org/wiki/Q_(number_format))"""
     return x / (1 << num_frac_bits)
 
 
 def dbl_to_fxp(x: float, num_frac_bits: int) -> int:
-    """Converts a a floating-point value `x` into a fixed-point integer given
+    """Converts a floating-point value `x` into a fixed-point integer given
     some number of fractional bits `num_frac_bits`. Note that a signed FXP value
     requires 1-bit for sign representation. For example, a 16b signed `short` int
     representing a value with no integer part has `num_frac_bits = 15` (or in
-    Q0.15 in [Q format](https://en.wikipedia.org/wiki/Q_(number_format))"""
+    `Q0.15` in [Q format](https://en.wikipedia.org/wiki/Q_(number_format))"""
     return round(x * (1 << num_frac_bits))
 
 
 def fxp_truncate(x: int, N: int) -> int:
-    """Truncate fixed point value `x` by `N` bits"""
+    """Truncate fixed point value `x` by $N$ bits"""
     return x >> N
 
 
 def fxp_round_halfup(x: int, N: int) -> int:
-    """Round fixed point value `x` by `N` bits using half-up rounding, like:
-    floor(x+0.5)"""
+    """Round fixed point value `x` by $N$ bits using half-up rounding, like:
+
+    $$ floor(x+0.5) $$
+    """
     return ((x >> (N - 1)) + 1) >> 1
 
 
@@ -95,7 +98,7 @@ def write_ints_to_file(file_name: str, x: list[int], bit_width: int):
 
 
 def _safe_np_iter(x: np.ndarray) -> np.ndarray:
-    """Replace `0` values with smallest floating point value to avoid /0 exceptions"""
+    """Replace `0` values with smallest floating point value to avoid $/0$ exceptions"""
     return np.where(x == 0, np.finfo("float").smallest_normal, x)
 
 
@@ -117,12 +120,20 @@ def mag_to_dB(x: np.ndarray, ref: float = 1.0) -> np.ndarray:
 def mag_to_dBFS(x: np.ndarray, max_mag: float) -> np.ndarray:
     """Converts magnitude value(s) `x` (number of counts for a given integer
     sample type to a dBFS (dB full scale) value, given maximum magnitude `max_mag`.
-    Note that `max_mag` is scaled by sqrt(2) when input samples are complex to
-    account of max magnitude = sqrt(I^2 + Q^2), to normalize to 0 dBFS"""
+    Note that `max_mag` is scaled by $\\sqrt{2}$ when input samples are complex to
+    account of max magnitude $= \\sqrt{I^{2} + Q^{2}}$, to normalize to 0 dBFS"""
     max_mag_scaled = max_mag
-    if x.dtype == complex:
+    if np.iscomplexobj(x):
         max_mag_scaled *= np.sqrt(2)
     return mag_to_dB(x, max_mag_scaled)
+
+
+def dbfs_fft(x: np.ndarray, max_mag: float = 1.0) -> np.ndarray:
+    """Compute FFT"""
+    if np.isrealobj(x):
+        return mag_to_dBFS(np.fft.rfft(x), max_mag)
+    else:
+        return mag_to_dBFS(np.fft.fft(x), max_mag)
 
 
 def dB_to_power(x: np.ndarray) -> np.ndarray:
@@ -142,7 +153,7 @@ def interleave_iq(i: np.ndarray, q: np.ndarray, dtype=np.float32) -> np.ndarray:
 
 
 def deinterleave_iq(iq: np.ndarray, swap_iq: bool = False) -> np.ndarray:
-    """De-interleave input I/Q array (e.x. [I0,Q0,I1,Q1,..]) to complex output array"""
+    """De-interleave input I/Q array (e.x. `[I0,Q0,I1,Q1,..]`) to complex output array"""
     if swap_iq:
         return iq[1::2] + 1j * iq[::2]
     else:
@@ -178,7 +189,7 @@ def write_iq_to_file(
 
 
 def gray_code(n: int) -> list[int]:
-    r"""Generate $N$-bit gray code sequence"""
+    """Generate $N$-bit gray code sequence"""
     gray_list = []
     for i in range(0, 1 << n):
         gray_list.append(i ^ (i >> 1))

@@ -16,7 +16,7 @@ def test_time():
     plot.plt.show()
 
     # show FFT power spectrum of `test_sine`
-    freq, Y = measurements.PSD(test_sine, fs, True, True)
+    freq, Y = measurements.PSD(test_sine, fs, True)
     plot.freq_sig(freq, Y)
     plot.plt.show()
 

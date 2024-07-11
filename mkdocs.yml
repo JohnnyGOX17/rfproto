@@ -38,7 +38,11 @@ plugins:
 
 nav:
   - Home: index.md
-  - filtering.md
+  - Modules:
+    - Filtering: filtering.md
+    - Measurements: measurements.md
+    - Plotting: plot.md
+    - Utilities: utils.md
 
 markdown_extensions:
   - pymdownx.arithmatex:

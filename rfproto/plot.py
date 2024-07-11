@@ -9,8 +9,12 @@ import typing
 from . import measurements, frequency, utils
 
 
-def _plot_common(title):
-    """Common plot setup"""
+def _plot_common(title: str):
+    """Common `rfproto` style plot setup
+
+    Args:
+        title: Plot title
+    """
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     plt.title(title)
@@ -21,8 +25,13 @@ def _plot_common(title):
     return fig, ax
 
 
-def samples(y, title=""):
-    """Plot samples (no time-base)"""
+def samples(y, title: str = ""):
+    """Plot samples (no time-base)
+
+    Args:
+        y: time-series data
+        title: Plot title
+    """
     fig, ax = _plot_common(title)
     plt.plot(y, linewidth=0.5)
     plt.ylabel("Amplitude", fontsize=12)
@@ -30,8 +39,14 @@ def samples(y, title=""):
     return fig, ax
 
 
-def time_sig(t, y, title=""):
-    """Plot samples over a given time-base"""
+def time_sig(t, y, title: str = ""):
+    """Plot samples over a given time-base
+
+    Args:
+        y: time-series data
+        t: time vector (same length of `y`)
+        title: Plot title
+    """
     fig, ax = _plot_common(title)
     plt.plot(t, y, linewidth=0.5)
     plt.ylabel("Amplitude", fontsize=12)
@@ -39,8 +54,13 @@ def time_sig(t, y, title=""):
     return fig, ax
 
 
-def filter_coefficients(filter_coef: np.ndarray, title=""):
-    """Plot filter coefficients"""
+def filter_coefficients(filter_coef: np.ndarray, title: str = ""):
+    """Plot filter coefficients
+
+    Args:
+        filter_coef: filter weights (impulse response)
+        title: Plot title
+    """
     fig, ax = _plot_common(title)
     plt.plot(filter_coef, ".")
     plt.ylabel("Amplitude", fontsize=12)
@@ -48,8 +68,13 @@ def filter_coefficients(filter_coef: np.ndarray, title=""):
     return fig, ax
 
 
-def filter_response(filter_coef: np.ndarray, title=""):
-    """Plot filter frequency response"""
+def filter_response(filter_coef: np.ndarray, title: str = ""):
+    """Plot filter frequency response
+
+    Args:
+        filter_coef: filter weights (impulse response)
+        title: Plot title
+    """
     w, h = sig.freqz(filter_coef)
     fig, ax = _plot_common(title)
     ax.plot(w / np.pi, utils.mag_to_dB(h), "b")
@@ -63,8 +88,16 @@ def filter_response(filter_coef: np.ndarray, title=""):
     return fig, ax
 
 
-def freq_sig(freq, y, title="", scale_noise=False, y_unit="dBFS"):
-    """Plot frequency-domain input signal"""
+def freq_sig(freq, y, title: str = "", scale_noise: bool = False, y_unit: str = "dBFS"):
+    """Plot frequency-domain input signal
+
+    Args:
+        freq: frequency bins
+        y: frequency-domain data (same length as number of frequency bins)
+        title: Plot title
+        scale_noise: don't show full noise floor extent when True
+        y_unit: Unit for frequency bin data
+    """
     fig, ax = _plot_common(title)
     plt.plot(freq, y, linewidth=0.5)
     plt.xlabel("Frequency (Hz)", fontsize=12)
@@ -82,24 +115,19 @@ def spec_an(
     title="",
     scale_noise=False,
     y_unit="dBFS",
-    real: bool = False,
     norm: bool = False,
     ignore_percent: float = 0.1,
     fft_shift=False,
     show_SFDR=True,
 ):
-    """Take PSD of time-domain input signal and plot in frequency-domain"""
-    freq, y_PSD = measurements.PSD(x, fs, real, norm)
-    if fft_shift:
-        y_PSD = np.fft.fftshift(y_PSD)
-        freq = (
-            np.linspace(-len(y_PSD) // 2, len(y_PSD) // 2, len(y_PSD)) * fs / len(y_PSD)
-        )
-    dSFDR = measurements.SFDR(x, fs, real, norm, ignore_percent)
-    title_str = title + " [SFDR: {:.2f} dB]".format(dSFDR["SFDR"])
-    fig, ax = freq_sig(freq, y_PSD, title_str, scale_noise, y_unit)
+    """Take PSD of time-domain input signal and plot in frequency-domain. Optionally calculate SFDR and show in plot."""
+    freq, y_PSD = measurements.PSD(x, fs, norm=norm, fft_shift=fft_shift)
 
     if show_SFDR:
+        dSFDR = measurements.SFDR(x, fs, norm, ignore_percent)
+        title += " [SFDR: {:.2f} dB]".format(dSFDR["SFDR"])
+        fig, ax = freq_sig(freq, y_PSD, title, scale_noise, y_unit)
+
         max_freq = max(freq)
         max_dB = max(y_PSD)
         txt_offset_x = 0.05 * max_freq
@@ -121,6 +149,9 @@ def spec_an(
             dSFDR["fc_dB"] - txt_offset_y,
             "{:.2f} {} @\n{}".format(dSFDR["fc_dB"], y_unit, fund_f_str),
         )
+    else:
+        fig, ax = freq_sig(freq, y_PSD, title, scale_noise, y_unit)
+
     return fig, ax
 
 
@@ -132,17 +163,11 @@ def IQ(
 ):
     """Generate I/Q plot
 
-    Parameters
-    ----------
-    signal : ndarray
-        Complex sample data vector
-    title : str, optional, default: ""
-        Plot title
-    alpha : float, optional, default: 1.0
-        Value < 1.0 allows opaque dot points, useful for high sample count
-        clustering visualization
-    labels : bool, optional, default: False
-        When True, label each point based on sample/point index
+    Args:
+        signal: Complex sample data vector
+        title: Plot title
+        alpha: Value < 1.0 allows opaque dot points, useful for high sample count clustering visualization
+        labels: When True, label each point based on sample/point index
     """
     fig, ax = _plot_common(title)
     plt.plot(np.real(signal), np.imag(signal), ".", alpha=alpha)
@@ -171,20 +196,14 @@ def IQ_animated(
     fps: int = 10,
 ):
     """Generate animated I/Q plot (shows I/Q over time)
-    NOTE: can be used in notebook with `%matplotlib widget` macro at top of notebook
+    **NOTE:** can be used in notebook with `%matplotlib widget` macro at top of notebook
 
-    Parameters
-    ----------
-    signal : ndarray
-        Complex I/Q sample data vector
-    num_points_per_frame : int
-        How many points per frame to plot
-    title : str, optional, default: ""
-        Plot title
-    file : str, optional, default: ""
-        GIF file to save to when non-empty
-    fps : int, optional, default: 10
-        Frames per second to render animated I/Q plit
+    Args:
+        signal: Complex I/Q sample data vector
+        num_points_per_frame: How many points per frame to plot
+        title: Plot title
+        file: GIF file to save to when non-empty
+        fps: Frames per second to render animated I/Q plit
     """
     num_frames = int(len(signal) / num_points_per_frame)
 
@@ -240,17 +259,11 @@ def eye(
 ):
     """Generate eye diagram of time domain input signal
 
-    Parameters
-    ----------
-    signal : ndarray
-        Complex I/Q sample data vector
-    SPS :int
-        Samples/Symbol ratio (NOTE: must be an integer oversampling ration (OSR)
-        to properly render time-sliced eye
-    num_disp_sym : int, optional, default: 2
-        Number of symbols to display in eye diagram
-    num_sweeps : int, optional, default: len(signal)
-        Number of eye sweeps to plot, defaults to entire length of input signal
+    Args:
+        signal: Complex I/Q sample data vector
+        SPS: Samples/Symbol ratio (NOTE: must be an integer oversampling ration (OSR) to properly render time-sliced eye
+        num_disp_sym: Number of symbols to display in eye diagram
+        num_sweeps: Number of eye sweeps to plot, defaults to entire length of input signal
     """
     if num_sweeps < 1:
         num_sweeps = len(signal)
