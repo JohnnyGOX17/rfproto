@@ -1,11 +1,10 @@
-from rfproto import plot, measurements
+#!/usr/bin/env python
+
+from rfproto import plot, measurements, sig_gen
 import numpy as np
-import os
 
 
-def test_time():
-    if os.environ.get("NO_PLOT") == "true":
-        return
+def plot_time():
     f = 1100
     fs = 48000
     N = 50000
@@ -21,9 +20,7 @@ def test_time():
     plot.plt.show()
 
 
-def test_IQ():
-    if os.environ.get("NO_PLOT") == "true":
-        return
+def plot_IQ():
     # show I/Q plot
     N = 1000
     IQ_data = np.array([4 + 4j, -4 + 4j, -4 - 4j, 4 - 4j])
@@ -39,6 +36,23 @@ def test_IQ():
     plot.plt.show()
 
 
+def plot_intensity():
+    symbol_rate = 7.5e6
+    output_fs = 17.22e6
+    output_iq = sig_gen.gen_mod_signal(
+        "QPSK",
+        np.random.randint(0, 4, 256 * 10240).tolist(),
+        output_fs,
+        symbol_rate,
+        "RRC",
+        1.0,
+    )
+
+    plot.fft_intensity_plot(output_iq, 1024, 2, 300, "plasma")
+    plot.plt.show()
+
+
 if __name__ == "__main__":
-    test_time()
-    test_IQ()
+    # plot_time()
+    # plot_IQ()
+    plot_intensity()

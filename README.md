@@ -24,3 +24,10 @@ Run test suite with `$ ./scripts/run-tests.sh`
 
 Documentation uses [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), preview with `$ mkdocs serve -a localhost:8888`. Publishes with GitHub action as well.
 
+## TODO
+
+See auto-generated [TODO.md](./TODO.md).
+
+- [ ] Look at https://github.com/veeresht/CommPy since its unmaintained
+- [ ] Filtering/convolution kernels like https://joht.github.io/johtizen/algorithm/2022/10/22/a-different-approach-to-convolution.html and https://dsp.stackexchange.com/questions/15412/fir-filters-direct-form-transposed-fir
+

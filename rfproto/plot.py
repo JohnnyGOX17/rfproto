@@ -299,3 +299,50 @@ def eye(
     plt.show()
 
     return xaxis, eye
+
+
+# TODO: also look at https://github.com/Kurene/plot-spectrogram-in-realtime-by-matplotlib/blob/main/realtimeplot.py
+def fft_intensity_plot(
+    samples: np.ndarray,
+    fft_len: int = 256,
+    fft_div: int = 2,
+    mag_steps: int = 100,
+    cmap: str = "plasma",
+):
+    """Real-Time Spectrum Analyzer like FFT persistence plot
+    Based on [tdsepsilon's post](https://teaandtechtime.com/python-intensity-graded-fft-plots/)
+    and [notebook code](https://github.com/Tschucker/Python-Intensity-Graded-FFT/blob/main/animated_plots/ig_fft_animation_qpsk.ipynb)"""
+    num_ffts = int(np.floor(len(samples) / fft_len))
+
+    fft_array = []
+    for i in range(num_ffts):
+        temp = np.fft.fftshift(np.fft.fft(samples[i * fft_len : (i + 1) * fft_len]))
+        temp_mag = 20.0 * np.log10(np.abs(temp))
+        fft_array.append(temp_mag)
+
+    max_mag = np.amax(fft_array)
+    min_mag = np.abs(np.amin(fft_array))
+
+    norm_fft_array = fft_array
+    for i in range(num_ffts):
+        norm_fft_array[i] = (fft_array[i] + (min_mag)) / (max_mag + (min_mag))
+
+    mag_step = 1 / mag_steps
+
+    hitmap_array = np.random.random((mag_steps + 1, int(fft_len / fft_div))) * np.exp(
+        -10
+    )
+
+    for i in range(num_ffts):
+        for m in range(fft_len):
+            hit_mag = int(norm_fft_array[i][m] / mag_step)
+            hitmap_array[hit_mag][int(m / fft_div)] = (
+                hitmap_array[hit_mag][int(m / fft_div)] + 1
+            )
+
+    hitmap_array_db = 20.0 * np.log10(hitmap_array + 1)
+
+    figure, axes = plt.subplots()
+    axes.imshow(hitmap_array_db, origin="lower", cmap=cmap, interpolation="bilinear")
+
+    return figure
