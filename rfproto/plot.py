@@ -301,7 +301,6 @@ def eye(
     return xaxis, eye
 
 
-# TODO: also look at https://github.com/Kurene/plot-spectrogram-in-realtime-by-matplotlib/blob/main/realtimeplot.py
 def fft_intensity_plot(
     samples: np.ndarray,
     fft_len: int = 256,
@@ -346,3 +345,72 @@ def fft_intensity_plot(
     axes.imshow(hitmap_array_db, origin="lower", cmap=cmap, interpolation="bilinear")
 
     return figure
+
+
+def waterfall(
+    x: np.ndarray,
+    w: np.ndarray,
+    fft_len: int,
+    stride_len: int,
+    num_rows: int,
+    cmap: str = "viridis",
+    anim_interval: int = 10,
+):
+    """Creates animated waterfall spectrogram using Short Time FFTs (STFTs). For static
+    image generation of spectrograms, see [SciPy Signal ShortTimeFFT](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.ShortTimeFFT.html)
+    or [matplotlib specgram](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.specgram.html).
+
+    Args:
+        x: input time-domain signal
+        w: array of values to use as a window for each sliding window before taking the FFT
+        fft_len: length of FFT for each step of the STFT. When > window length, the FFT is zero-padded
+        stride_len: same as hop length, how many samples to stride after each step.
+        num_rows: number of output rows in plot (e.g. number of history time steps)
+        cmap: matplotlib colormap
+    """
+    Y = np.zeros((num_rows, fft_len))
+
+    fig = plt.figure(frameon=False)
+    im = plt.imshow(Y, animated=True, aspect="auto", cmap=cmap)
+    plt.tight_layout()
+    plt.axis("off")
+    # update the color scale min/max on first loop iter
+    vmax, vmin = -np.inf, np.inf
+    idx = 0
+
+    def update(*args):
+        nonlocal idx, vmax, vmin
+
+        # apply window on each data slice at each step
+        slice = x[idx : idx + len(w)]
+        windowed_slice = slice * w
+        Y[0] = utils.mag_to_dB(np.fft.fftshift(np.fft.fft(windowed_slice, n=fft_len)))
+
+        # set dynamic range
+        max_val = np.max(Y[0])
+        if vmax < max_val:
+            vmax = max_val
+        # use the first std dev to not make color range so drastic with noise floor
+        # TODO: or make this a logarithmic color scale...
+        min_val = max_val - np.std(Y[0])
+        if vmin > min_val:
+            vmin = min_val
+
+        # update row
+        im.set_array(Y)
+        im.set_clim(vmin, vmax)
+        # shift values
+        Y[1:] = Y[:-1]
+        idx += stride_len
+        return (im,)
+
+    # need to save variable or animation never plots
+    ani = animation.FuncAnimation(
+        fig,
+        update,
+        frames=(len(x) // stride_len - 3),
+        interval=anim_interval,
+        blit=True,
+        repeat=False,
+    )
+    plt.show()

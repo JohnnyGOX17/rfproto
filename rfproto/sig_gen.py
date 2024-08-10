@@ -6,21 +6,11 @@ from . import filter, modulation, multirate
 def cmplx_ct_sinusoid(A: float, W: float, t: np.ndarray, phi: float = 0) -> np.ndarray:
     """Generates a complex, continuous-time sinusoid
 
-    Parameters
-    ----------
-    A : float
-        Amplitude (magnitude of complex phasor)
-    W : float
-        Frequency (radians/sec)
-    t : ndarray
-        Vector of time points to evaluate the sinusoid at
-    phi : float, optional, default: 0
-        Initial phase of sinusoid (radians)
-
-    Returns
-    -------
-    y : ndarray
-        Vector of complex sinusoid samples
+    Args:
+        A: Amplitude (magnitude of complex phasor)
+        W: Frequency (radians/sec)
+        t: Vector of time points to evaluate the sinusoid at
+        phi: Initial phase of sinusoid (radians)
     """
     return A * np.exp(1j * (W * t + phi))
 
@@ -28,21 +18,11 @@ def cmplx_ct_sinusoid(A: float, W: float, t: np.ndarray, phi: float = 0) -> np.n
 def cmplx_dt_sinusoid(A: float, f: float, fs: float, num_samples: int) -> np.ndarray:
     """Generates a complex, discrete-time sinusoid. Note `f` and `fs` units must match!
 
-    Parameters
-    ----------
-    A : float
-        Amplitude (magnitude of complex phasor)
-    f : float
-        Frequency (Hz, or radians/sec)
-    fs : float
-        Sampling Frequency (Hz, or radians/sec)
-    num_samples : int
-        Number of samples to output
-
-    Returns
-    -------
-    y : ndarray
-        Vector of complex sinusoid samples
+    Args:
+        A: Amplitude (magnitude of complex phasor)
+        f: Frequency (Hz, or radians/sec)
+        fs: Sampling Frequency (Hz, or radians/sec)
+        num_samples: Number of samples to output
     """
     t = np.linspace(0, num_samples - 1, num_samples)
     return cmplx_ct_sinusoid(A, 2 * np.pi * f / fs, t, 0)
@@ -53,23 +33,12 @@ def cmplx_dt_lfm_chirp(
 ) -> np.ndarray:
     """Generates a complex, discrete-time Linear Frequency Modulated (LFM) Chirp.
 
-    Parameters
-    ----------
-    A : float
-        Amplitude (magnitude of complex phasor)
-    f_start : float
-        Start Frequency (Hz)
-    f_end : float
-        End Frequency (Hz)
-    fs : float
-        Sampling Frequency (Hz)
-    num_samples : int
-        Number of samples to output
-
-    Returns
-    -------
-    y : ndarray
-        Vector of complex chirp samples
+    Args:
+        A: Amplitude (magnitude of complex phasor)
+        f_start: Start Frequency (Hz)
+        f_end: End Frequency (Hz)
+        fs: Sampling Frequency (Hz)
+        num_samples: Number of samples to output
     """
     y = np.zeros(num_samples) + 1j * np.zeros(num_samples)
     chirp_rate = ((f_end - f_start) / fs) / num_samples
@@ -83,21 +52,11 @@ def cmplx_dt_lfm_chirp(
 def real_ct_sinusoid(A: float, W: float, t: np.ndarray, phi: float = 0) -> np.ndarray:
     """Generates a real, continuous-time sinusoid
 
-    Parameters
-    ----------
-    A : float
-        Amplitude
-    W : float
-        Frequency (radians/sec)
-    t : ndarray
-        Vector of time points to evaluate the sinusoid at
-    phi : float, optional, default: 0
-        Initial phase of sinusoid (radians)
-
-    Returns
-    -------
-    y : ndarray
-        Vector of sinusoid samples
+    Args:
+        A: Amplitude
+        W: Frequency (radians/sec)
+        t: Vector of time points to evaluate the sinusoid at
+        phi: Initial phase of sinusoid (radians)
     """
     return A * np.sin(W * t + phi)
 

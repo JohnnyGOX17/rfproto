@@ -102,7 +102,7 @@ def _safe_np_iter(x: np.ndarray) -> np.ndarray:
     return np.where(x == 0, np.finfo("float").smallest_normal, x)
 
 
-def power_to_dB(x: np.ndarray, ref: float = 1.0) -> np.ndarray:
+def power_to_dB(x, ref: float = 1.0):
     """Return the decibel (dB) value of the given linear power value `x` and an
     optional reference value `ref`. This assumes power is already square of an
     energy value (e.g. amplitude or magnitude)"""
@@ -110,14 +110,14 @@ def power_to_dB(x: np.ndarray, ref: float = 1.0) -> np.ndarray:
     return 10 * np.log10(np.abs(_safe_np_iter(x)) / ref)
 
 
-def mag_to_dB(x: np.ndarray, ref: float = 1.0) -> np.ndarray:
+def mag_to_dB(x, ref: float = 1.0):
     """Return the decibel (dB) value of the given linear magnitude value `x` (e.g.
     energy or signal amplitude) and an optional reference value `ref`"""
     # NOTE: abs() required to get complex value's magnitude
     return 20 * np.log10(np.abs(_safe_np_iter(x)) / ref)
 
 
-def mag_to_dBFS(x: np.ndarray, max_mag: float) -> np.ndarray:
+def mag_to_dBFS(x, max_mag: float):
     """Converts magnitude value(s) `x` (number of counts for a given integer
     sample type to a dBFS (dB full scale) value, given maximum magnitude `max_mag`.
     Note that `max_mag` is scaled by $\\sqrt{2}$ when input samples are complex to
@@ -128,7 +128,7 @@ def mag_to_dBFS(x: np.ndarray, max_mag: float) -> np.ndarray:
     return mag_to_dB(x, max_mag_scaled)
 
 
-def dbfs_fft(x: np.ndarray, max_mag: float = 1.0) -> np.ndarray:
+def dbfs_fft(x, max_mag: float = 1.0):
     """Compute FFT"""
     if np.isrealobj(x):
         return mag_to_dBFS(np.fft.rfft(x), max_mag)
@@ -136,14 +136,20 @@ def dbfs_fft(x: np.ndarray, max_mag: float = 1.0) -> np.ndarray:
         return mag_to_dBFS(np.fft.fft(x), max_mag)
 
 
-def dB_to_power(x: np.ndarray) -> np.ndarray:
+def dB_to_power(x):
     """Return the linear power value given the decibel (dB) value `x`"""
     return 10.0 ** (x / 10.0)
 
 
-def dB_to_mag(x: np.ndarray) -> np.ndarray:
+def dB_to_mag(x):
     """Return the linear magnitude value given the decibel (dB) value `x`"""
     return 10.0 ** (x / 20.0)
+
+
+def avg_pwr_dB(x):
+    """Returns the average power (in dB) of an input array of linear values (e.x. voltage)"""
+    # |x| to give complex magnitude for instantaneous power x**2
+    return power_to_dB(np.mean(np.abs(x) ** 2))
 
 
 def interleave_iq(i: np.ndarray, q: np.ndarray, dtype=np.float32) -> np.ndarray:

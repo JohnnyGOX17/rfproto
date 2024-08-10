@@ -40,8 +40,10 @@ nav:
   - Home: index.md
   - Modules:
     - Filtering: filtering.md
+    - Impairments: impairments.md
     - Measurements: measurements.md
     - Plotting: plot.md
+    - Signal Generation: sig_gen.md
     - Utilities: utils.md
 
 markdown_extensions:

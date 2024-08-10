@@ -52,7 +52,26 @@ def plot_intensity():
     plot.plt.show()
 
 
+def plot_waterfall():
+    symbol_rate = 7.5e6
+    output_fs = 17.22e6
+    output_iq = sig_gen.gen_mod_signal(
+        "QPSK",
+        np.random.randint(0, 4, 256 * 10240).tolist(),
+        output_fs,
+        symbol_rate,
+        "RRC",
+        1.0,
+    )
+
+    plot.waterfall(
+        output_iq, w=np.hamming(64), fft_len=256, stride_len=32, num_rows=256
+    )
+    plot.plt.show()
+
+
 if __name__ == "__main__":
-    # plot_time()
-    # plot_IQ()
+    plot_time()
+    plot_IQ()
     plot_intensity()
+    plot_waterfall()
