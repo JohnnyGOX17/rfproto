@@ -12,7 +12,7 @@ Python library for RF and SDR prototyping. Helpful reuse methods for RF measurem
 
 ### Building & CI
 
-* Install editable local version (preferably within a [venv](https://john-gentile.com/kb/programming_languages/python.html#virtual-environments-venv)) with all optional packages for testing with `$ pip install --upgrade --user -e .[docs,test]`
+* Install editable local version (preferably within a [venv](https://john-gentile.com/kb/programming_languages/python.html#virtual-environments-venv)) with all optional packages for testing with `$ pip install --upgrade -e .[docs,test]` (add `--user` if not in `venv`).
 * Install pre-commit checks with `$ ln -sf ../../scripts/pre-commit ./.git/hooks/pre-commit`
 * Trigger GitHub action to publish to PyPI with a tagged commit (e.x. `git tag -am "test auto versioning" 0.0.2`) on `main` branch. Note versioning is also inferred from the git tag value, and this will only run on push on tag.
 
