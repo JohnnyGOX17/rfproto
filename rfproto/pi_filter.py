@@ -99,3 +99,11 @@ class PiFilter:
         next PI filter output"""
         self.accumulator += self._Ki * err
         return self.accumulator + (self._Kp * err)
+        ## NOTE: for FPGAs where we want to limit the number of delays from err_in->err_out,
+        ##  we could use the below which allows the previous accumulator value to be used.
+        ##  It's nearly identical in loop response to the above, but can be done in 2 stages
+        ##  (Kp/Ki error products -> out = acc + Kp_prod & acc += Ki_prod) rather than 3 stages
+        ##  (Kp/Ki error products -> acc + Kp_prod -> out = acc += Ki_prod)
+        # prev_acc = self.accumulator
+        # self.accumulator += self._Ki * err
+        # return prev_acc + (self._Kp * err)

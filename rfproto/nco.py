@@ -10,6 +10,7 @@ nco_print_trace = False
 use_fxp = True  # else, use floating-point calcs
 use_small_angle_approx = False  # use small angle approximation in floating-point Taylor Series (not nearly as good as actual Taylor Series)
 
+
 # NCO helper functions
 def FreqToFcw(f: float, phase_width: int, fs: float) -> int:
     """Convert a desired output frequency `f` (Hz) to NCO Frequency Control Word (FCW)
@@ -349,6 +350,8 @@ class Nco:
         # handling wrapping of phase accumulator like in FXP
         if self._phase_acc >= 2**self._N:
             self._phase_acc -= 2**self._N
+        if self._phase_acc < 0:
+            self._phase_acc += 2**self._N
 
     def Step(self) -> complex:
         """Step the NCO one clock cycle by converting internal phase accumulator

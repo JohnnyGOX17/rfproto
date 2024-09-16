@@ -167,7 +167,13 @@ def deinterleave_iq(iq: np.ndarray, swap_iq: bool = False) -> np.ndarray:
 
 
 def open_iq_file(file, dtype=np.int8, swap_iq: bool = False) -> np.ndarray:
-    """Open interleaved binary file and create complex I/Q output array"""
+    """Open interleaved binary file and create complex I/Q output array. Note if
+    wanting to open a floating point complex file, simply use the NumPy native method:
+    `np.fromfile(file, dtype=np.complex64)` for instance for [single precision complex C-type](https://numpy.org/doc/stable/user/basics.types.html#relationship-between-numpy-data-types-and-c-data-types)
+
+    This method is mainly for interleaved complex integer files, [which could be opened via](https://stackoverflow.com/a/32877245)
+    `dtype=np.dtype([('re', np.int16), ('im', np.int16)])`, but this still needs conversion to
+    floating-point complex type for further math usage."""
     file_iq = np.fromfile(file, dtype=dtype)
     return deinterleave_iq(file_iq, swap_iq)
 
