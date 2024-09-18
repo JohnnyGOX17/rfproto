@@ -68,6 +68,7 @@ def gen_mod_signal(
     input_symbol_rate: float,
     tx_pulse_filter: str,
     tx_filter_rolloff: float,
+    tx_filter_num_symbols: int = 16,
 ):
     match modulation_type:
         case "BPSK":
@@ -80,9 +81,20 @@ def gen_mod_signal(
             raise ValueError("Unknown modulation type!")
     mapped_iq = mod.modulate(symbols)
 
-    (L, M) = multirate.get_rational_resampling_factors(
-        input_symbol_rate, output_sample_rate, 128
-    )
+    resample_rate = output_sample_rate / input_symbol_rate
+
+    assert (
+        resample_rate >= 1.0
+    ), "Resampling rate expected to be a positive, upsample factor (L>M)"
+
+    # We can make simplifications when there is an integer resampling factor
+    is_int_resamp = round(resample_rate) == resample_rate
+    if is_int_resamp:
+        (L, M) = int(resample_rate), 1
+    else:
+        (L, M) = multirate.get_rational_resampling_factors(
+            input_symbol_rate, output_sample_rate, 128
+        )
 
     # Since resample_poly wants to run filter at interpolated rate (zero stuffed),
     # multiply intended sample rate by upsample factor. As well, multiply the number
@@ -90,17 +102,26 @@ def gen_mod_signal(
     match tx_pulse_filter:
         case "RC":
             tx_filter = filter.RaisedCosine(
-                L * output_sample_rate, input_symbol_rate, tx_filter_rolloff, 32 * L + 1
+                L * input_symbol_rate,
+                input_symbol_rate,
+                tx_filter_rolloff,
+                2 * tx_filter_num_symbols * L + 1,
             )
         case "RRC":
             tx_filter = filter.RootRaisedCosine(
-                L * output_sample_rate, input_symbol_rate, tx_filter_rolloff, 32 * L + 1
+                L * input_symbol_rate,
+                input_symbol_rate,
+                tx_filter_rolloff,
+                2 * tx_filter_num_symbols * L + 1,
             )
         case _:
             raise ValueError("Unknown TX pulse shape filter type!")
 
-    tx_resampled_iq = signal.resample_poly(
-        mapped_iq, L, M, window=tx_filter, padtype="mean"
-    )
+    if is_int_resamp:
+        tx_resampled_iq = filter.pulse_shape(mapped_iq, L, tx_filter)
+    else:
+        tx_resampled_iq = signal.resample_poly(
+            mapped_iq, L, M, window=tx_filter, padtype="mean"
+        )
 
     return tx_resampled_iq

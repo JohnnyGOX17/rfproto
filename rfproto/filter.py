@@ -1,6 +1,8 @@
 """Implements filter methods"""
 
 import numpy as np
+from scipy import signal
+from . import multirate as mr
 
 
 def RaisedCosine(
@@ -9,6 +11,8 @@ def RaisedCosine(
     """Generates [Raised Cosine filter](https://en.wikipedia.org/wiki/Raised-cosine_filter) impulse response as:
 
     ![impulse_response](https://wikimedia.org/api/rest_v1/media/math/render/svg/8b38e84f30fc32db087bddc9570266683691084c)
+
+    ![freq_response](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Raised-cosine_filter.svg/1920px-Raised-cosine_filter.svg.png)
 
     Args:
         sample_rate: Sample rate of signal (Hz)
@@ -37,6 +41,8 @@ def RootRaisedCosine(
     Unity passband gain is achieved by ensuring returned coefficients sum to `1.0`:
 
     $$ \\hat{h(t)} = h(t) / \\sum h(t) $$
+
+    ![implulse_response](https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Root-raised-cosine-impulse.svg/1920px-Root-raised-cosine-impulse.svg.png)
 
     For more information, see [Root Raised Cosine (RRC) Filters and Pulse Shaping in Communication Systems - NASA](https://ntrs.nasa.gov/api/citations/20120008631/downloads/20120008631.pdf).
 
@@ -89,6 +95,7 @@ def RootRaisedCosine(
 
 def UnityResponse(num_taps: int) -> np.ndarray:
     """Returns unity-gain, passthrough filter coefficients
+
     Args:
         num_taps: Number of filter taps
 
@@ -98,3 +105,34 @@ def UnityResponse(num_taps: int) -> np.ndarray:
     h_unity = np.zeros(num_taps)
     h_unity[num_taps // 2] = 1.0
     return h_unity
+
+
+def pulse_shape(symbols: np.ndarray, OSR: int, h: np.ndarray, trim_output: bool = True):
+    """Performs integer upsampling and pulse-shape filtering on a given set of input symbols.
+    Commonly this is performed as part of the transmit process in a communications system to
+    eliminate inter-symbol interference (ISI).
+
+    Args:
+        symbols: Input symbol samples to interpolate then pulse-shape
+        OSR: Integer Oversampling Rate
+        h: Array of filter coefficients to use during pulse-shape filtering (e.x. RRC)
+        trim_output: Append 0's to input and trim output to align directly with input symbols
+
+    Returns:
+        Array of pulse-shape filtered symbols
+    """
+    N = len(h)  # filter length (== number of symbols in filter impulse response)
+    if trim_output:
+        sym_prepend = np.insert(symbols, 0, symbols[0] * np.ones(N // 2))
+        syms = np.append(sym_prepend, symbols[-1] * np.ones(N // 2))
+    else:
+        syms = symbols
+
+    tx = mr.interpolate(syms, OSR)
+
+    # Apply pulse shape filter using direct-form FIR SciPy convolution
+    # Similar to np.convolve(x, h, 'same')
+    conv_out = signal.lfilter(h, 1, tx)
+
+    # truncate first samples due to prepend and apped to align output with input
+    return conv_out[N * OSR :] if trim_output else conv_out

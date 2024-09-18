@@ -21,22 +21,18 @@ def get_rational_resampling_factors(
 
 
 def interpolate(x: np.ndarray, L: int) -> np.ndarray:
-    """Interpolates (expands) input array L times to output array by zero stuffing
+    """Interpolates (aka upsamples/expands) input array L times to output array by zero stuffing
 
-    Parameters
-    ----------
-    x : ndarray
-        Input sample array
-    L : interpolation factor
-        len(y) == L * len(x)
+    Args:
+        x : Input sample array
+        L : Interpolation factor where `len(y) == L * len(x)`
 
-    Returns
-    -------
-    y : ndarray
-        Vector of interpolated output samples
+    Returns:
+        y : Vector of interpolated output samples
     """
     if L < 1:
         raise ValueError("L must be > 1")
+    # Extend w/same datatype as input (e.x. complex)
     y = np.zeros(len(x) * L, dtype=x.dtype)
     y[::L] = x
     return y
@@ -45,17 +41,12 @@ def interpolate(x: np.ndarray, L: int) -> np.ndarray:
 def decimate(x: np.ndarray, M: int) -> np.ndarray:
     """Decimates input array by M to output array by keeping every other M sample
 
-    Parameters
-    ----------
-    x : ndarray
-        Input sample array
-    M : decimation factor
-        Output is 1/M of input
+    Args:
+        x : Input sample array
+        M : Decimation factor (output length is 1/M of input)
 
-    Returns
-    -------
-    y : ndarray
-        Vector of decimated output samples
+    Returns:
+        y : Vector of decimated output samples
     """
     if M < 1:
         raise ValueError("M must be > 1")

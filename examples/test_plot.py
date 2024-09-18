@@ -32,9 +32,6 @@ def plot_IQ():
     plot.IQ(IQ_data, "I/Q test plot", alpha=0.4)
     plot.plt.show()
 
-    plot.IQ_animated(IQ_data, N // 10, "I/Q test plot")
-    plot.plt.show()
-
 
 def plot_intensity():
     symbol_rate = 7.5e6
