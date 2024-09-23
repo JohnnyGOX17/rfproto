@@ -77,14 +77,16 @@ def filter_response(filter_coef: np.ndarray, title: str = ""):
     """
     w, h = sig.freqz(filter_coef)
     fig, ax = _plot_common(title)
-    ax.plot(w / np.pi, utils.mag_to_dB(h), "b")
+    ax.plot(w / np.pi, utils.mag_to_dB(h), "b", linewidth=0.5)
     ax.set_ylabel("Amplitude (dB)", color="b", fontsize=12)
     ax.set_xlabel(r"Normalized Frequency ($\times \pi$ rad/sample)", fontsize=12)
+    ax.margins(x=0)
     ax2 = ax.twinx()
     angles = np.unwrap(np.angle(h))
-    ax2.plot(w / np.pi, angles, "g")
+    ax2.plot(w / np.pi, angles, "g", linewidth=0.5)
     ax2.set_ylabel("Angle (radians)", color="g", fontsize=12)
     ax2.axis("tight")
+    ax2.margins(x=0)
     return fig, ax
 
 

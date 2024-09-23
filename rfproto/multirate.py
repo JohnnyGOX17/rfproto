@@ -84,3 +84,17 @@ class comb:
                 self.delay_line[i + 1] = self.delay_line[i]
         self.delay_line[0] = x
         return retval
+
+
+# class polyphase_filter:
+#    """Naive class to demonstrate polyphase filter functionality"""
+#
+#    def __init__(self, LM: int, h: np.ndarray, decimating: bool):
+#        if LM <= 1:
+#            raise ValueError("Resampling rate must be > 1!")
+#        # Reshape filter coefficients to be indexed by each polyphase leg
+#        self.hi = h.reshape(len(h) // LM, LM).T
+#        # Tapped delay line for each polyphase subfilter/leg
+#        self.xi = np.zeros_like(self.hi)
+#
+#    def step(self, x):

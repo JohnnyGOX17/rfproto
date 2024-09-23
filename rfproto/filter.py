@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy import signal
-from . import multirate as mr
+from . import multirate as mr, utils
 
 
 def RaisedCosine(
@@ -136,3 +136,74 @@ def pulse_shape(symbols: np.ndarray, OSR: int, h: np.ndarray, trim_output: bool 
 
     # truncate first samples due to prepend and apped to align output with input
     return conv_out[N * OSR :] if trim_output else conv_out
+
+
+def measure_filter_response(
+    filter_coef: np.ndarray,
+    passband_start: float,
+    passband_stop: float,
+    stopband_start: float,
+    stopband_stop: float = 1.0,
+):
+    """Measure the passband ripple and stopband attenuation of a given set of filter coefficients.
+
+    Args:
+        filter_coef: filter weights/taps
+        passband_start: Normalized (0.0->1.0*fs) frequency the passband starts
+        passband_stop: Normalized (0.0->1.0*fs) frequency the passband stops
+        stopband_start: Normalized (0.0->1.0*fs) frequency the stopband starts
+        stopband_stop: Normalized (0.0->1.0*fs) frequency the stopband stops
+
+    Returns:
+        Passband ripple (dB), Stopband attenuation (dB)
+    """
+    if (passband_start < 0.0) or (passband_start > 1.0):
+        raise ValueError("Passband value must be in normalized frequency range")
+    if (passband_stop < 0.0) or (passband_stop > 1.0):
+        raise ValueError("Passband value must be in normalized frequency range")
+    if passband_start >= passband_stop:
+        raise ValueError("Passband stop frequency must be > passband start")
+    if (stopband_start < 0.0) or (stopband_start > 1.0):
+        raise ValueError("Stopband value must be in normalized frequency range")
+    if (stopband_stop < 0.0) or (stopband_stop > 1.0):
+        raise ValueError("Stopband value must be in normalized frequency range")
+    if stopband_start >= stopband_stop:
+        raise ValueError("Stopband stop frequency must be > stopband start")
+
+    w, h = signal.freqz(filter_coef)
+    h_db = utils.mag_to_dB(h)
+    w_norm = w / np.pi
+
+    # find nearest indices of band edges
+    wp_start_idx = np.nanargmin(np.abs(w_norm - passband_start))
+    wp_end_idx = np.nanargmin(np.abs(w_norm - passband_stop))
+    ws_start_idx = np.nanargmin(np.abs(w_norm - stopband_start))
+    ws_end_idx = np.nanargmin(np.abs(w_norm - stopband_stop))
+
+    # compute passband ripple (dB)
+    passband_max = np.max(h_db[wp_start_idx:wp_end_idx])
+    passband_min = np.min(h_db[wp_start_idx:wp_end_idx])
+
+    # compute stopband attenuation (dB)
+    stopband_atten = np.max(h_db[ws_start_idx:ws_end_idx])
+
+    return (passband_max - passband_min), stopband_atten
+
+
+def firordest(passband_ripple: float, stopband_atten: float, transition_bw: float):
+    """Estimate the number of FIR filter taps to meet the desired specifications. Similar to [MATLAB's firpmord method](https://www.mathworks.com/help/signal/ref/firpmord.html), uses [Bellanger's estimate](https://dsp.stackexchange.com/a/31077) based on:
+
+    Args:
+        passband_ripple: Total passband ripple/deviation (dB)
+        stopband_atten: Minimum stopband attenuation from passband (dB)
+        transition_bw: Normalized (0.0->1.0 * fs) bandwidth of transition region
+    """
+    d1 = 1.0 - 10.0 ** (-abs(passband_ripple) / 20.0)
+    d2 = 10.0 ** (-abs(stopband_atten / 20.0))
+    return round((2 / 3) * np.log10(1 / (10 * d1 * d2)) / transition_bw)
+
+
+# class fir_filter:
+#     """Naive class to demonstrate direct-form FIR filtering"""
+#
+#     def __init__(self, )
