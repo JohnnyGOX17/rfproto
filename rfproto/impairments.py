@@ -1,6 +1,6 @@
 import numpy as np
 
-from . import utils
+from . import sig_gen, utils
 
 
 def awgn(avg_pwr_dB: float, num_samples: int) -> np.ndarray:
@@ -19,3 +19,11 @@ def awgn(avg_pwr_dB: float, num_samples: int) -> np.ndarray:
     return np.random.normal(0, noise_amp, num_samples) + 1j * np.random.normal(
         0, noise_amp, num_samples
     )
+
+
+def freq_offset_static(x: np.ndarray, freq: float, fs: float) -> np.ndarray:
+    osc = sig_gen.cmplx_dt_sinusoid(1.0, freq, fs, len(x))
+    return x * osc
+
+
+# TODO: create a frequency offset that interpolates between a list of frequencies over time, https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html#scipy.interpolate.CubicSpline

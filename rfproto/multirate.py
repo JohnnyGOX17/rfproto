@@ -1,4 +1,4 @@
-from . import fxp_int as fp
+from . import filter, fxp_int as fp
 import numpy as np
 
 
@@ -86,15 +86,63 @@ class comb:
         return retval
 
 
-# class polyphase_filter:
-#    """Naive class to demonstrate polyphase filter functionality"""
-#
-#    def __init__(self, LM: int, h: np.ndarray, decimating: bool):
-#        if LM <= 1:
-#            raise ValueError("Resampling rate must be > 1!")
-#        # Reshape filter coefficients to be indexed by each polyphase leg
-#        self.hi = h.reshape(len(h) // LM, LM).T
-#        # Tapped delay line for each polyphase subfilter/leg
-#        self.xi = np.zeros_like(self.hi)
-#
-#    def step(self, x):
+class polyphase_filter:
+    """Naive class to demonstrate polyphase filter functionality"""
+
+    def __init__(self, LM: int, h: np.ndarray, decimating: bool):
+        if LM <= 1:
+            raise ValueError("Resampling rate must be > 1!")
+        self.LM = LM
+        # Reshape filter coefficients to be indexed by each polyphase leg
+        # NOTE: number of taps in prototype filter `h` must be an even
+        #  multiple of the resampling factor `LM`
+        hi = h.reshape(len(h) // LM, LM).T
+
+        self._is_decimating = decimating
+
+        # Decimator accumulator
+        self._decim_acc = 0.0
+        # Interpolator latched value per step()
+        self._interp_latch = 0.0
+        # Commutator index
+        self._comm_idx = LM - 1 if decimating else 0
+
+        # Array of sub FIR filters for each polyphase leg
+        self._sub_fir = []
+        for i in range(self.LM):
+            temp_filt = filter.fir_filter(hi[i])
+            self._sub_fir.append(temp_filt)
+
+    def _step_decim(self, x: float) -> tuple[float | None, bool]:
+        self._decim_acc += self._sub_fir[self._comm_idx].step(x)
+        if self._comm_idx == 0:
+            temp = self._decim_acc
+            self._decim_acc = 0.0
+            self._comm_idx = self.LM - 1
+            return temp, True
+        else:
+            self._comm_idx -= 1
+            return None, True
+
+    def _step_iterp(self, x: float) -> tuple[float | None, bool]:
+        consumed = self._comm_idx == 0
+
+        # Only use the consumed value on the first cycle so proper value is used
+        # across each polyphase leg at each step() call
+        if consumed:
+            self._interp_latch = x
+        retval = self._sub_fir[self._comm_idx].step(self._interp_latch)
+
+        if self._comm_idx == self.LM - 1:
+            self._comm_idx = 0
+        else:
+            self._comm_idx += 1
+        return retval, consumed
+
+    def step(self, x: float) -> tuple[float | None, bool]:
+        return self._step_decim(x) if self._is_decimating else self._step_iterp(x)
+
+    def reset(self):
+        self._decim_acc = 0.0
+        for filt in self._sub_fir:
+            filt.reset()

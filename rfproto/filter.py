@@ -203,7 +203,27 @@ def firordest(passband_ripple: float, stopband_atten: float, transition_bw: floa
     return round((2 / 3) * np.log10(1 / (10 * d1 * d2)) / transition_bw)
 
 
-# class fir_filter:
-#     """Naive class to demonstrate direct-form FIR filtering"""
-#
-#     def __init__(self, )
+class fir_filter:
+    """Naive class to demonstrate direct-form FIR filtering. If wanting to efficiently compute the direct-form convolution, see [SciPy Signal's lfilter](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html)"""
+
+    def __init__(self, h: np.ndarray):
+        self.N = len(h)
+        self.h = h
+        self.dly = np.zeros(self.N)
+
+    def step(self, x: float) -> float:
+        # First shift in sample into delay line
+        for i in reversed(range(self.N)):
+            if i < self.N - 1:
+                self.dly[i + 1] = self.dly[i]
+        self.dly[0] = x
+
+        # Next multiply and accumulate the discrete convolution of delay line
+        # samples and filter tap coefficients
+        mac = 0.0
+        for i in range(self.N):
+            mac += self.dly[i] * self.h[i]
+        return mac
+
+    def reset(self):
+        self.dly = np.zeros(self.N)

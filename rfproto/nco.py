@@ -173,10 +173,8 @@ class Nco:
         """Convert a desired output frequency `f` (Hz) to NCO Frequency Control
         Word (FCW) and set self.FCW"""
         # TODO: do we care to support -fs/2 for signed FCW??
-        if not (0.0 <= f <= self._fs / 2):
-            raise ValueError(
-                f"Given frequency {f} Hz is outside NCO range of 0 Hz -> fs/2"
-            )
+        if not (-self._fs / 2 <= f <= self._fs / 2):
+            raise ValueError(f"Given frequency {f} Hz is outside NCO range of +/- fs/2")
 
         self.FCW = FreqToFcw(f, int(self._N), self._fs)
 
