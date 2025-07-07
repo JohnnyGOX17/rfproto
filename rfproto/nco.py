@@ -191,23 +191,23 @@ class Nco:
 
         if self._quarter_wave:
             if quad == 0:  # no change
-                lut_index = self._phase_acc // (2 ** (self._N - self._P))
+                lut_index = int(self._phase_acc // (2 ** (self._N - self._P)))
             elif quad == 1:  # upper 2'bx1 set
-                lut_index = 2 * len(self._LUT) - self._phase_acc // (
-                    2 ** (self._N - self._P)
+                lut_index = int(
+                    2 * len(self._LUT) - self._phase_acc // (2 ** (self._N - self._P))
                 )
             elif quad == 2:
-                lut_index = self._phase_acc // (2 ** (self._N - self._P)) - 2 * len(
-                    self._LUT
+                lut_index = int(
+                    self._phase_acc // (2 ** (self._N - self._P)) - 2 * len(self._LUT)
                 )
             elif quad == 3:  # upper 2'bx1 set
-                lut_index = 4 * len(self._LUT) - self._phase_acc // (
-                    2 ** (self._N - self._P)
+                lut_index = int(
+                    4 * len(self._LUT) - self._phase_acc // (2 ** (self._N - self._P))
                 )
 
         else:
             # take phase accumulator MSBs for LUT index (>> N-P)
-            lut_index = self._phase_acc // (2 ** (self._N - self._P))
+            lut_index = int(self._phase_acc // (2 ** (self._N - self._P)))
 
         # Clamp max index
         lut_index = min(int(lut_index), len(self._LUT) - 1)
@@ -295,11 +295,11 @@ class Nco:
             if nco_print_trace:
                 if cos_err_fp != 0.0:
                     print(
-                        f"Cos small-angle approx. error= {100.0*(cos_err_fp_small - cos_err_fp)/cos_err_fp}%"
+                        f"Cos small-angle approx. error= {100.0 * (cos_err_fp_small - cos_err_fp) / cos_err_fp}%"
                     )
                 if sin_err_fp != 0.0:
                     print(
-                        f"Sin small-angle approx. error= {100.0*(sin_err_fp_small - sin_err_fp)/sin_err_fp}%"
+                        f"Sin small-angle approx. error= {100.0 * (sin_err_fp_small - sin_err_fp) / sin_err_fp}%"
                     )
 
             if use_small_angle_approx:
@@ -347,9 +347,9 @@ class Nco:
             self._phase_acc += random.randrange(-self._dither_amp, self._dither_amp)
         # handling wrapping of phase accumulator like in FXP
         if self._phase_acc >= 2**self._N:
-            self._phase_acc -= 2**self._N
+            self._phase_acc -= int(2**self._N)
         if self._phase_acc < 0:
-            self._phase_acc += 2**self._N
+            self._phase_acc += int(2**self._N)
 
     def Step(self) -> complex:
         """Step the NCO one clock cycle by converting internal phase accumulator
