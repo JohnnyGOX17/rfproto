@@ -1,3 +1,5 @@
+"""Time and Frequency domain plotting utilities"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -349,6 +351,56 @@ def fft_intensity_plot(
     return figure
 
 
+def spectrogram(
+    x: np.ndarray,
+    w: np.ndarray,
+    fft_len: int,
+    stride_len: int,
+    dynamic_range_dbfs: float = -1.0,
+    cmap: str = "viridis",
+    figsize: tuple[int, int] = (12, 8),
+    dpi: int = 300,
+):
+    """Creates animated waterfall spectrogram using Short Time FFTs (STFTs). For static
+    image generation of spectrograms, see [SciPy Signal ShortTimeFFT](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.ShortTimeFFT.html)
+    or [matplotlib specgram](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.specgram.html).
+
+    Args:
+        x: input time-domain signal
+        w: array of values to use as a window for each sliding window before taking the FFT
+        fft_len: length of FFT for each step of the STFT. When > window length, the FFT is zero-padded
+        stride_len: same as hop length, how many samples to stride after each step.
+        dynamic_range_dbfs: Given each pixel's power is derived from the dB (logarithmic) process of each STFT step, and that signals vary widely in SNR and noise floor characteristics, define the colormap's minimum value to be some dB below full-scale (dBFS). For example, if the maximum power value after STFT processing was 15 dB, `dynamic_range_dbfs = 10` would set the colormap minimum value to 5 dB. If not given (defaults to -1), the logic will default to setting the minimum to one standard deviation away from the max value.
+        cmap: matplotlib colormap
+    """
+    # number of output rows in plot (e.g. number of history time steps)
+    num_rows = len(x) // stride_len
+
+    Y = np.zeros((num_rows, fft_len))
+
+    plt.figure(figsize=figsize, dpi=dpi, frameon=False)
+    plt.tight_layout()
+    plt.axis("off")
+
+    idx = 0
+    for i in range(num_rows):
+        # apply window on each data slice at each step
+        slice = x[idx : idx + len(w)]
+        # TODO: Multiply window by +1/-1 to save on fftshift op
+        windowed_slice = slice * w
+        Y[i] = utils.mag_to_dB(np.fft.fftshift(np.fft.fft(windowed_slice, n=fft_len)))
+        idx += stride_len
+
+    # set dynamic range
+    vmax = Y.max()
+    if dynamic_range_dbfs <= 0.0:
+        vmin = vmax - Y.std()
+    else:
+        vmin = vmax - dynamic_range_dbfs
+    plt.imshow(Y, aspect="auto", cmap=cmap, vmin=vmin, vmax=vmax, interpolation="none")
+    plt.show()
+
+
 def waterfall(
     x: np.ndarray,
     w: np.ndarray,
@@ -385,6 +437,7 @@ def waterfall(
 
         # apply window on each data slice at each step
         slice = x[idx : idx + len(w)]
+        # Multiply window by +1/-1 to save on fftshift op
         windowed_slice = slice * w
         Y[0] = utils.mag_to_dB(np.fft.fftshift(np.fft.fft(windowed_slice, n=fft_len)))
 

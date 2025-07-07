@@ -65,7 +65,7 @@ class MPSKModulation(Modulation):
         """
         constellation = np.zeros(order)
         if order == 2:  # BPSK
-            constellation = np.array([1 + 0j, -1 + 0j])
+            constellation = np.array([-1 + 0j, 1 + 0j])
         if order == 4:  # QPSK
             constellation = np.array([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j])
         else:
