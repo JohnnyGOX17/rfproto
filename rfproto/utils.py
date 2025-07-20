@@ -173,8 +173,15 @@ def open_iq_file(file, dtype=np.int8, swap_iq: bool = False) -> np.ndarray:
 
     This method is mainly for interleaved complex integer files, [which could be opened via](https://stackoverflow.com/a/32877245)
     `dtype=np.dtype([('re', np.int16), ('im', np.int16)])`, but this still needs conversion to
-    floating-point complex type for further math usage."""
+    floating-point complex type for further math usage.
+
+    This method also handles common unsigned integer input types (`uint8` and `uint16`) that some SDRs may output, and will normalize them to remove DC offset.
+    """
     file_iq = np.fromfile(file, dtype=dtype)
+    if dtype == np.uint8:
+        file_iq = file_iq.astype(np.int32) - 128
+    elif dtype == np.uint16:
+        file_iq = file_iq.astype(np.int32) - 32768
     return deinterleave_iq(file_iq, swap_iq)
 
 
