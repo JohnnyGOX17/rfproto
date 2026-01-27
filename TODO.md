@@ -8,5 +8,5 @@
 | [modulation.py](rfproto/modulation.py#L8) | 8 |  use techniques like https |
 | [nco.py](rfproto/nco.py#L175) | 175 |  do we care to support -fs/2 for signed FCW?? |
 | [plot.py](rfproto/plot.py#L257) | 257 |  add jitter/histogram like measurements like https |
-| [plot.py](rfproto/plot.py#L389) | 389 |  Multiply window by +1/-1 to save on fftshift op |
-| [plot.py](rfproto/plot.py#L449) | 449 |  or make this a logarithmic color scale... |
+| [plot.py](rfproto/plot.py#L390) | 390 |  Multiply window by +1/-1 to save on fftshift op |
+| [plot.py](rfproto/plot.py#L450) | 450 |  or make this a logarithmic color scale... |

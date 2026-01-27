@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.animation as animation
-from matplotlib.ticker import EngFormatter
+from matplotlib.ticker import EngFormatter, MaxNLocator
 import scipy.signal as sig
 import typing
 
@@ -64,7 +64,7 @@ def filter_coefficients(filter_coef: np.ndarray, title: str = ""):
         title: Plot title
     """
     fig, ax = _plot_common(title)
-    plt.plot(filter_coef, ".")
+    plt.plot(filter_coef, ".-", linewidth=0.5)
     plt.ylabel("Amplitude", fontsize=12)
     plt.xlabel("Index", fontsize=12)
     return fig, ax
@@ -293,13 +293,14 @@ def eye(
     xaxis = np.arange(nsamps) / resamp
 
     plt.figure()
-    # plot showing continuous trajectory of
-    plt.plot(xaxis, eye[:, :num_sweeps])
-    # actual sample locations
-    plt.plot(xaxis[::resamp], eye[:, :num_sweeps][::resamp], "b.")
+    plt.plot(xaxis, eye[:, :num_sweeps], linewidth=0.1)
     plt.title("Eye Diagram")
     plt.xlabel("Samples")
-    plt.grid()
+    plt.ylabel("Amplitude")
+    plt.margins(x=0)
+    plt.grid(True, linestyle="--")
+    plt.minorticks_on()
+    plt.tick_params(labelsize=8)
     plt.show()
 
     return xaxis, eye
@@ -469,3 +470,21 @@ def waterfall(
         repeat=False,
     )
     plt.show()
+
+
+def bits(x, title: str = ""):
+    """Plots digital bit waveform"""
+    ax = plt.figure().gca()
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.step(np.arange(len(x)), x, linewidth=4, where="mid")
+    plt.axhline(0, color="k", linewidth=0.5)
+    plt.vlines(
+        np.arange(1, len(x)),
+        -1.25,
+        1.25,
+        colors="k",
+        linestyles="dashed",
+        linewidth=0.5,
+    )
+    plt.title(title)
+    plt.margins(x=0, y=0)
